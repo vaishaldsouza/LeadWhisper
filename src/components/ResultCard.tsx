@@ -1,10 +1,13 @@
-import { Copy, CheckCircle2, Mail, Linkedin, Twitter, Phone } from "lucide-react";
+import { Copy, CheckCircle2, Mail, Linkedin, Twitter, Phone, Fingerprint, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "./Toast";
 import { cn } from "./Toast";
 
 interface ResultCardProps {
     data: {
+        buyerPersona: string;
+        intelligenceSignal: string;
+        spamScore: number;
         painPoints: string[];
         companyContext: string;
         outreach: {
@@ -49,6 +52,22 @@ export default function ResultCard({ data }: ResultCardProps) {
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+            {/* Persona Badge Section */}
+            <div className="flex items-center">
+                <div className="glass px-4 py-2.5 rounded-xl flex items-center gap-2.5 relative group cursor-help border border-primary/20 bg-primary/5 shadow-sm">
+                    <Fingerprint size={16} className="text-primary" />
+                    <span className="text-sm font-semibold text-white/90">{data.buyerPersona} Persona</span>
+                    <span className="flex h-2 w-2 rounded-full bg-primary/50"></span>
+
+                    {/* Tooltip */}
+                    <div className="absolute top-full left-0 mt-3 w-72 p-4 glass-panel rounded-xl text-xs text-white/80 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20 shadow-xl border-primary/20">
+                        <span className="font-semibold text-primary mb-1 block">Intelligence Signal</span>
+                        {data.intelligenceSignal}
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="glass p-5 rounded-2xl flex flex-col gap-3 card-hover transition-all">
                     <h3 className="text-primary font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
@@ -105,9 +124,21 @@ export default function ResultCard({ data }: ResultCardProps) {
                 {activeTab === "email" && (
                     <div className="animate-in fade-in slide-in-from-right-2 duration-300 flex flex-col gap-3">
                         <div className="flex justify-between items-center">
-                            <div className="text-sm">
-                                <span className="text-white/40">Subject: </span>
-                                <span className="text-white font-medium">{data.outreach.email.subject}</span>
+                            <div className="text-sm flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div>
+                                    <span className="text-white/40">Subject: </span>
+                                    <span className="text-white font-medium">{data.outreach.email.subject}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/40 border border-white/10" title="Deliverability Score">
+                                    <ShieldCheck size={14} className={cn(
+                                        data.spamScore > 80 ? "text-green-400" :
+                                            data.spamScore >= 50 ? "text-yellow-400" : "text-red-400"
+                                    )} />
+                                    <span className={cn("text-xs font-semibold",
+                                        data.spamScore > 80 ? "text-green-400" :
+                                            data.spamScore >= 50 ? "text-yellow-400" : "text-red-400"
+                                    )}>{data.spamScore}/100</span>
+                                </div>
                             </div>
                             <button
                                 onClick={() => handleCopy(`Subject: ${data.outreach.email.subject}\n\n${data.outreach.email.body}`)}

@@ -55,6 +55,8 @@ export async function POST(req: Request) {
       ${safetyContext}
       
       Your task is to analyze the prospect and output a highly structured JSON response with EXACTLY the following keys:
+      - "buyerPersona": A string that MUST be exactly one of: "Analytical", "Assertive", "Visionary", or "Amiable". Deduce their psychological profile from their 'About' section.
+      - "intelligenceSignal": A 1-sentence explanation of why you chose that buyerPersona based on specific details from their profile.
       - "painPoints": An array of EXACTLY 2 strings, representing the core business or professional pain points this person likely faces. Make them specific and insightful.
       - "companyContext": A short paragraph (string) of enriched data using your internal knowledge about the likely company environment, industry trends, or relevant context for this persona.
       - "outreach": An object containing the following 4 channels:
@@ -64,7 +66,7 @@ export async function POST(req: Request) {
           - "coldCall": An object with "hook" (string) and "objectionTips" (array of EXACTLY 2 strings). The hook is an opening line for a cold call. The objectionTips are two battlecard suggestions on how to handle common objections for this specific persona.
 
       Tone requested: ${tone}
-      Adjust your writing style across all outreach channels to match this tone.
+      Adjust your writing style across all outreach channels to match this tone AND to subtly mirror the detected buyerPersona's preferred communication style.
       - Professional: polished, highly respectful, value-driven.
       - Casual: relaxed, conversational, friendly.
       - Bold: confident, provocative, challenging the status quo.
@@ -82,6 +84,18 @@ export async function POST(req: Request) {
 
         // Parse the JSON response
         const parsedData = JSON.parse(responseText);
+
+        const triggerWords = ["free", "guarantee", "urgent", "act now", "risk-free", "winner", "limited time", "buy", "discount", "cash", "bonus", "click here", "deal"];
+        let spamScore = 100;
+        if (parsedData.outreach && parsedData.outreach.email) {
+            const lowerEmail = (parsedData.outreach.email.subject + " " + parsedData.outreach.email.body).toLowerCase();
+            triggerWords.forEach(word => {
+                if (lowerEmail.includes(word)) {
+                    spamScore -= 20;
+                }
+            });
+        }
+        parsedData.spamScore = Math.max(0, spamScore);
 
         return NextResponse.json(parsedData);
     } catch (error: any) {
